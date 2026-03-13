@@ -12,15 +12,26 @@ on:
         required: false
         type: boolean
         default: false
+      update_latest:
+        description: 'Update :latest tag'
+        required: false
+        type: boolean
+        default: false
   workflow_call:
     inputs:
       version:
         description: 'OpenRefine version to build'
         required: true
         type: string
+      update_latest:
+        description: 'Update :latest tag'
+        required: false
+        type: boolean
+        default: true
 
 env:
   VERSION: ${{ inputs.version }}
+  UPDATE_LATEST: ${{ inputs.update_latest }}
   DOCKERHUB_REPO: kennedyoliveira/openrefine
   GHCR_REPO: ghcr.io/${{ github.repository }}
 
@@ -59,7 +70,7 @@ jobs:
             type=ref,event=branch
             type=sha,prefix=
             type=raw,value=${{ env.VERSION }}
-            type=raw,value=latest,enable={{ is_default_branch }}
+            type=raw,value=latest,enable=${{ env.UPDATE_LATEST == 'true' }}
 
       - name: Build and push to GHCR
         uses: docker/build-push-action@v6
@@ -99,17 +110,23 @@ jobs:
       - name: Pull from GHCR
         run: |
           docker pull ${{ env.GHCR_REPO }}:${{ env.VERSION }}
-          docker pull ${{ env.GHCR_REPO }}:latest
+          if [ "${{ env.UPDATE_LATEST }}" == "true" ]; then
+            docker pull ${{ env.GHCR_REPO }}:latest
+          fi
 
       - name: Tag for Docker Hub
         run: |
           docker tag ${{ env.GHCR_REPO }}:${{ env.VERSION }} ${{ env.DOCKERHUB_REPO }}:${{ env.VERSION }}
-          docker tag ${{ env.GHCR_REPO }}:latest ${{ env.DOCKERHUB_REPO }}:latest
+          if [ "${{ env.UPDATE_LATEST }}" == "true" ]; then
+            docker tag ${{ env.GHCR_REPO }}:latest ${{ env.DOCKERHUB_REPO }}:latest
+          fi
 
       - name: Push to Docker Hub
         run: |
           docker push ${{ env.DOCKERHUB_REPO }}:${{ env.VERSION }}
-          docker push ${{ env.DOCKERHUB_REPO }}:latest
+          if [ "${{ env.UPDATE_LATEST }}" == "true" ]; then
+            docker push ${{ env.DOCKERHUB_REPO }}:latest
+          fi
 
   release:
     needs: build
@@ -127,6 +144,6 @@ jobs:
             
             **Image Tags:**
             - `ghcr.io/${{ github.repository }}:${{ env.VERSION }}`
-            - `ghcr.io/${{ github.repository }}:latest`
+            ${{ env.UPDATE_LATEST == 'true' && '- `ghcr.io/${{ github.repository }}:latest`' || '' }}
           draft: false
           prerelease: false

@@ -2,7 +2,7 @@ name: Check for New Releases
 
 on:
   schedule:
-    - cron: "0 0 * * *"
+    - cron: "0 18 * * *"
   workflow_dispatch:
 
 permissions:
@@ -73,7 +73,8 @@ jobs:
               workflow_id: 'build-push.yml',
               ref: '${{ github.ref }}',
               inputs: {
-                version: '${{ needs.check-release.outputs.new_version }}'
+                version: '${{ needs.check-release.outputs.new_version }}',
+                update_latest: 'true'
               }
             });
 
