@@ -74,7 +74,8 @@ jobs:
               ref: '${{ github.ref }}',
               inputs: {
                 version: '${{ needs.check-release.outputs.new_version }}',
-                update_latest: 'true'
+                update_latest: 'true',
+                push_dockerhub: 'true'
               }
             });
 
