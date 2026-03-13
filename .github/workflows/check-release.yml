@@ -2,8 +2,12 @@ name: Check for New Releases
 
 on:
   schedule:
-    - cron: '0 0 * * *'
+    - cron: "0 0 * * *"
   workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
 
 jobs:
   check-release:
@@ -34,7 +38,7 @@ jobs:
         run: |
           CURRENT_VERSION="${{ steps.openrefine.outputs.result }}"
           echo "Latest OpenRefine version: $CURRENT_VERSION"
-          
+
           if [ -f .released-versions ]; then
             if grep -q "^${CURRENT_VERSION}$" .released-versions; then
               echo "has_new=false" >> $GITHUB_OUTPUT
@@ -43,7 +47,7 @@ jobs:
               exit 0
             fi
           fi
-          
+
           echo "has_new=true" >> $GITHUB_OUTPUT
           echo "new_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
           echo "New version found: $CURRENT_VERSION"
